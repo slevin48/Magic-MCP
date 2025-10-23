@@ -1,4 +1,4 @@
-"""FastMCP server that exposes a magic square generation tool."""
+"""MCP server implementation that exposes a magic square generation tool."""
 
 from __future__ import annotations
 
@@ -7,7 +7,8 @@ from typing import Any, Dict, Iterable, Optional
 
 import numpy as np
 import requests
-from fastmcp import FastMCP
+from mcp.server.fastmcp import FastMCP
+from pydantic import Field
 from requests import Response
 
 API_URL = "https://matlab-0j1h.onrender.com/mymagic/mymagic"
@@ -157,11 +158,21 @@ app = FastMCP(
         "Generate magic squares using the hosted MATLAB service backing the "
         "Magic MCP demo."
     ),
+    stateless_http=True,
 )
 
 
-@app.tool(name="generate_magic_square", description="Generate an n x n magic square.")
-def generate_magic_square(size: int, debug: bool = False) -> Dict[str, Any]:
+@app.tool(
+    title="Generate Magic Square",
+    description="Generate an n x n magic square.",
+)
+def generate_magic_square(
+    size: int = Field(description="The order of the magic square to generate."),
+    debug: bool = Field(
+        default=False,
+        description="Return additional debug information from the backend service.",
+    ),
+) -> Dict[str, Any]:
     """Generate a magic square of *size* using the remote MATLAB API."""
 
     if size <= 0:
@@ -187,4 +198,4 @@ def generate_magic_square(size: int, debug: bool = False) -> Dict[str, Any]:
 
 
 if __name__ == "__main__":  # pragma: no cover - manual execution entry point
-    app.run()
+    app.run(transport="streamable-http")
